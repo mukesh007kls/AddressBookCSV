@@ -1,12 +1,28 @@
 package org.example;
-import com.opencsv.CSVWriter;
+
+import com.opencsv.*;
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.bean.StatefulBeanToCsv;
+import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import com.opencsv.exceptions.CsvDataTypeMismatchException;
+import com.opencsv.exceptions.CsvException;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
+import com.opencsv.exceptions.CsvValidationException;
+import org.jetbrains.annotations.NotNull;
+
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLOutput;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("ALL")
 public class AddressBookOperations {
     Scanner sc = new Scanner(System.in);
     List<Address> addressList = new ArrayList<>();
@@ -43,15 +59,15 @@ public class AddressBookOperations {
             System.out.println("Enter PinCode:");
             address1.setPinCode(sc1.nextInt());
 
-            boolean present = true;
+            AtomicBoolean present = new AtomicBoolean(true);
 
-            for (Address tempAddress : addressList) {
-                if (tempAddress.getFirstName().equalsIgnoreCase(address1.getFirstName()) && tempAddress.getLastName().equalsIgnoreCase(address1.getLastName())) {
+            addressList.stream().forEach(p -> {
+                if (p.getFirstName().equalsIgnoreCase(address1.getFirstName()) && p.getLastName().equalsIgnoreCase(address1.getLastName())) {
                     System.out.println("Contact person already exist!");
-                    present = false;
+                    present.set(false);
                 }
-            }
-            if (present) {
+            });
+            if (present.get()) {
                 Address address2 = new Address(address1.getFirstName(), address1.getLastName(), address1.getPhoneNumber(),
                         address1.getEMail(), address1.getAddress(), address1.getCity(), address1.getState(),
                         address1.getPinCode());
@@ -74,63 +90,62 @@ public class AddressBookOperations {
         final int PIN_CODE = 8;
         Scanner sc2 = new Scanner(System.in);
         System.out.println("Enter First Name:-");
-        String firstName = sc2.nextLine();
+        AtomicReference<String> firstName = new AtomicReference<>(sc2.nextLine());
         System.out.println("Enter Last Name:-");
-        String lastName = sc2.nextLine();
+        AtomicReference<String> lastName = new AtomicReference<>(sc2.nextLine());
         boolean loop = true;
         while (loop) {
-            for (Address x : addressList) {
-                if (x.getFirstName().equalsIgnoreCase(firstName) && x.getLastName().equalsIgnoreCase(lastName)) {
-                    System.out.println("Choose which detail you want to change:-");
-                    System.out.println("1.First name\n2.Last Name\n3.Phone Number\n4.EMail\n5.Address\n6.City\n7.State\n8.PinCode");
-                    int choice = sc2.nextInt();
-                    sc2.nextLine();
-                    switch (choice) {
-                        case FIRST_NAME -> {
-                            System.out.println("Enter the New First Name:-");
-                            x.setFirstName(sc2.nextLine());
-                        }
-                        case LAST_NAME -> {
-                            System.out.println("Enter the New Last Name:-");
-                            x.setLastName(sc2.nextLine());
-                        }
-                        case PHONE_NUMBER -> {
-                            System.out.println("Enter the New Phone Number:-");
-                            x.setPhoneNumber(sc2.nextLong());
-                        }
-                        case EMAIL -> {
-                            System.out.println("Enter the New Email ID:-");
-                            x.setEMail(sc2.nextLine());
-                        }
-                        case ADDRESS -> {
-                            System.out.println("Enter the New Address:-");
-                            x.setAddress(sc2.nextLine());
-                        }
-                        case CITY -> {
-                            System.out.println("Enter the New City:-");
-                            x.setCity(sc2.nextLine());
-                        }
-                        case STATE -> {
-                            System.out.println("Enter the new state:-");
-                            x.setState(sc2.nextLine());
-                        }
-                        case PIN_CODE -> {
-                            System.out.println("Enter New PinCode");
-                            x.setPinCode(sc2.nextInt());
-                        }
+            addressList.stream().forEach(p -> {
+                System.out.println("Choose which detail you want to change:-");
+                System.out.println("1.First name\n2.Last Name\n3.Phone Number\n4.EMail\n5.Address\n6.City\n7.State\n8.PinCode");
+                int choice = sc2.nextInt();
+                sc2.nextLine();
+                switch (choice) {
+                    case FIRST_NAME -> {
+                        System.out.println("Enter the New First Name:-");
+                        p.setFirstName(sc2.nextLine());
                     }
-                    updatedContactDetail(x);
+                    case LAST_NAME -> {
+                        System.out.println("Enter the New Last Name:-");
+                        p.setLastName(sc2.nextLine());
+                    }
+                    case PHONE_NUMBER -> {
+                        System.out.println("Enter the New Phone Number:-");
+                        p.setPhoneNumber(sc2.nextLong());
+                    }
+                    case EMAIL -> {
+                        System.out.println("Enter the New Email ID:-");
+                        p.setEMail(sc2.nextLine());
+                    }
+                    case ADDRESS -> {
+                        System.out.println("Enter the New Address:-");
+                        p.setAddress(sc2.nextLine());
+                    }
+                    case CITY -> {
+                        System.out.println("Enter the New City:-");
+                        p.setCity(sc2.nextLine());
+                    }
+                    case STATE -> {
+                        System.out.println("Enter the new state:-");
+                        p.setState(sc2.nextLine());
+                    }
+                    case PIN_CODE -> {
+                        System.out.println("Enter New PinCode");
+                        p.setPinCode(sc2.nextInt());
+                    }
                 }
-                firstName = x.getFirstName();
-                lastName = x.getLastName();
-            }
+                updatedContactDetail(p);
+                firstName.set(p.getFirstName());
+                lastName.set(p.getLastName());
+            });
+
             System.out.println("If you want to change any other details of this contact enter edit:-");
             String editContact = sc.next();
             loop = editContact.equalsIgnoreCase("edit");
         }
     }
 
-    public void updatedContactDetail(Address address) {
+    public void updatedContactDetail(@NotNull Address address) {
         System.out.println("Updated Details of contact");
         System.out.println("Name:-" + address.getFirstName() + " " + address.getLastName());
         System.out.println("Phone Number:-" + address.getPhoneNumber());
@@ -151,17 +166,17 @@ public class AddressBookOperations {
     }
 
     public void printDetails() {
-        for (Address x : addressList) {
+        addressList.stream().forEach(p -> {
             System.out.println("Details for Person");
-            System.out.println("Name:-" + x.getFirstName() + " " + x.getLastName());
-            System.out.println("Phone Number:-" + x.getPhoneNumber());
-            System.out.println("EMail:-" + x.getEMail());
-            System.out.println("Address:-" + x.getAddress());
-            System.out.println("City:-" + x.getCity());
-            System.out.println("State:-" + x.getState());
-            System.out.println("PinCode:-" + x.getPinCode());
+            System.out.println("Name:-" + p.getFirstName() + " " + p.getLastName());
+            System.out.println("Phone Number:-" + p.getPhoneNumber());
+            System.out.println("EMail:-" + p.getEMail());
+            System.out.println("Address:-" + p.getAddress());
+            System.out.println("City:-" + p.getCity());
+            System.out.println("State:-" + p.getState());
+            System.out.println("PinCode:-" + p.getPinCode());
             System.out.println();
-        }
+        });
     }
 
     public void addressBook(String bookName, AddressBookOperations addressBookOperations) {
@@ -202,7 +217,7 @@ public class AddressBookOperations {
         addressDictionary.put(addressBookName, addressBookOperations);
     }
 
-    public void editBooks(HashMap<String, AddressBookOperations> addressDictionary) {
+    public void editBooks(@NotNull HashMap<String, AddressBookOperations> addressDictionary) {
         System.out.println("Enter the address book name you want to edit:-");
         String addressBookName = sc.nextLine();
         if (addressDictionary.containsKey(addressBookName)) {
@@ -216,7 +231,7 @@ public class AddressBookOperations {
         }
     }
 
-    public void deleteBook(HashMap<String, AddressBookOperations> addressDictionary) {
+    public void deleteBook(@NotNull HashMap<String, AddressBookOperations> addressDictionary) {
         System.out.println("Enter the address book name you want to delete:-");
         String addressBookName = sc.nextLine();
         if (addressDictionary.containsKey(addressBookName)) {
@@ -227,87 +242,145 @@ public class AddressBookOperations {
         }
     }
 
-    public void printBooks(HashMap<String, AddressBookOperations> addressDictionary) {
-        for (Map.Entry<String, AddressBookOperations> addressBook : addressDictionary.entrySet()) {
-            System.out.println(addressBook.getKey());
-            addressBook.getValue().printDetails();
-        }
+    public void printBooks(@NotNull HashMap<String, AddressBookOperations> addressDictionary) {
+        addressDictionary.values().stream().forEach(p -> {
+            System.out.println(addressDictionary.get(p));
+            p.printDetails();
+        });
     }
 
-    public List<Address> searchByState(String state, HashMap<String, AddressBookOperations> addressDictionary) {
+    public List<Address> searchByState(String state, @NotNull HashMap<String, AddressBookOperations> addressDictionary) {
         return addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).filter(p -> p.getCity().equalsIgnoreCase(state)).collect(Collectors.toList());
     }
 
-    public List<Address> searchByCity(String city, HashMap<String, AddressBookOperations> addressDictionary) {
+    public List<Address> searchByCity(String city, @NotNull HashMap<String, AddressBookOperations> addressDictionary) {
         return addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).filter(p -> p.getState().equalsIgnoreCase(city)).collect(Collectors.toList());
     }
 
-    public List<Address> sortContactByName(HashMap<String, AddressBookOperations> addressDictionary) {
+    public List<Address> sortContactByName(@NotNull HashMap<String, AddressBookOperations> addressDictionary) {
         return addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).sorted(Comparator.comparing(Address::getFirstName)).collect(Collectors.toList());
     }
-    public List<Address> sortContactByCity(HashMap<String, AddressBookOperations> addressDictionary){
-        return addressDictionary.values().stream().flatMap(p->p.addressList.stream()).sorted(Comparator.comparing(Address::getCity)).collect(Collectors.toList());
+
+    public List<Address> sortContactByCity(@NotNull HashMap<String, AddressBookOperations> addressDictionary) {
+        return addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).sorted(Comparator.comparing(Address::getCity)).collect(Collectors.toList());
     }
-    public List<Address> sortContactByZipCode(HashMap<String, AddressBookOperations> addressDictionary){
-        return addressDictionary.values().stream().flatMap(p->p.addressList.stream()).sorted(Comparator.comparing(Address::getPinCode)).collect(Collectors.toList());
+
+    public List<Address> sortContactByZipCode(@NotNull HashMap<String, AddressBookOperations> addressDictionary) {
+        return addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).sorted(Comparator.comparing(Address::getPinCode)).collect(Collectors.toList());
     }
-    public List<Address> sortContactByState(HashMap<String, AddressBookOperations> addressDictionary){
-        return addressDictionary.values().stream().flatMap(p->p.addressList.stream()).sorted(Comparator.comparing(Address::getState)).collect(Collectors.toList());
+
+    public List<Address> sortContactByState(@NotNull HashMap<String, AddressBookOperations> addressDictionary) {
+        return addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).sorted(Comparator.comparing(Address::getState)).collect(Collectors.toList());
     }
-    public void sortContacts(AddressBookOperations addressBookOperations,HashMap<String, AddressBookOperations> addressDictionary){
-        Scanner scanner=new Scanner(System.in);
+
+    public void sortContacts(AddressBookOperations addressBookOperations, HashMap<String, AddressBookOperations> addressDictionary) {
+        Scanner scanner = new Scanner(System.in);
         System.out.println("Enter choice for sorting:-\n1.Name\n2.City\n3.State\n4.ZipCode");
-        int choice=scanner.nextInt();
-        switch (choice){
-            case 1-> System.out.println(addressBookOperations.sortContactByName(addressDictionary));
-            case 2-> System.out.println(addressBookOperations.sortContactByCity(addressDictionary));
-            case 3-> System.out.println(addressBookOperations.sortContactByState(addressDictionary));
-            case 4-> System.out.println(addressBookOperations.sortContactByZipCode(addressDictionary));
+        int choice = scanner.nextInt();
+        switch (choice) {
+            case 1 -> System.out.println(addressBookOperations.sortContactByName(addressDictionary));
+            case 2 -> System.out.println(addressBookOperations.sortContactByCity(addressDictionary));
+            case 3 -> System.out.println(addressBookOperations.sortContactByState(addressDictionary));
+            case 4 -> System.out.println(addressBookOperations.sortContactByZipCode(addressDictionary));
         }
     }
 
     public void writeToCSVFile(HashMap<String, AddressBookOperations> addressDictionary) {
         try {
-            String csvPath="src/main/resources/Contact.csv";
-            List<String[]> csvDataList=new LinkedList<>();
-            List<Address> sortedList=addressDictionary.values().stream().flatMap(p->p.addressList.stream()).toList();
-            FileOutputStream fileOutputStream=new FileOutputStream(csvPath);
-            OutputStreamWriter outputStreamWriter=new OutputStreamWriter(fileOutputStream);
-            CSVWriter write=new CSVWriter(outputStreamWriter);
-            for (Address contact:sortedList) {
-                String[] csvData={contact.toString()};
+            String csvPath = "src/main/resources/Contact.csv";
+            List<String[]> csvDataList = new LinkedList<>();
+            List<Address> sortedList = addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).toList();
+            FileOutputStream fileOutputStream = new FileOutputStream(csvPath);
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream);
+            CSVWriter write = new CSVWriter(outputStreamWriter);
+            for (Address contact : sortedList) {
+                String[] csvData = {contact.toString()};
                 csvDataList.add(csvData);
             }
-            for (String[] data:csvDataList) {
+            for (String[] data : csvDataList) {
                 write.writeNext(data);
             }
             outputStreamWriter.close();
             fileOutputStream.close();
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public void writeToCsvFileUSingObject(HashMap<String, AddressBookOperations> addressDictionary) throws IOException {
+        String csvFilePath = "src/main/resources/Contact.csv";
+        List<Address> contactList = addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).toList();
+        Path path = Path.of(csvFilePath);
+        Files.deleteIfExists(path);
+        Files.createFile(path);
+        try (Writer writer = Files.newBufferedWriter(path)) {
+            StatefulBeanToCsvBuilder builder = new StatefulBeanToCsvBuilder<>(writer);
+            StatefulBeanToCsv beanToCsv = builder.build();
+            beanToCsv.write(contactList);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (CsvRequiredFieldEmptyException e) {
+            throw new RuntimeException(e);
+        } catch (CsvDataTypeMismatchException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void writeToFile(HashMap<String, AddressBookOperations> addressDictionary, AddressBookOperations addressBookOperations) throws IOException {
-        String filePath="src/main/resources/Contact.txt";
-        StringBuilder stringBuilder=new StringBuilder();
-        List<Address> contactList=addressBookOperations.sortContactByName(addressDictionary);
-        contactList.forEach(p->{
-            String contactData=p.toString().concat("\n");
+        String filePath = "src/main/resources/Contact.txt";
+        StringBuilder stringBuilder = new StringBuilder();
+        List<Address> contactList = addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).toList();
+        contactList.forEach(p -> {
+            String contactData = p.toString().concat("\n");
             stringBuilder.append(contactData);
         });
+        Path path = Path.of(filePath);
+        if (Files.exists(path)) Files.deleteIfExists(path);
+        Files.createFile(path);
         try {
-            Files.write(Paths.get(filePath),stringBuilder.toString().getBytes());
-        }catch (IOException exception){
+            Files.write(path, stringBuilder.toString().getBytes());
+        } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
 
-    public void readIOFile(){
-        String filePath="src/main/resources/Contact.txt";
+    public void writeToFileUsingObject(HashMap<String, AddressBookOperations> addressDictionary, @NotNull AddressBookOperations addressBookOperations) throws IOException {
+        String filePath = "src/main/resources/Contact.txt";
+        List<Address> contactList = addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).toList();
+        Path path = Path.of(filePath);
+        Files.deleteIfExists(path);
+        Files.createFile(path);
+
+    }
+
+    public void readIOFile() {
+        String filePath = "src/main/resources/Contact.txt";
         try {
             Files.lines(new File(filePath).toPath()).map(String::trim).forEach(System.out::println);
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void readCsvFile(){
+        String csvFilePath = "src/main/resources/Contact.csv";
+        Path path=Path.of(csvFilePath);
+        try (Reader reader = Files.newBufferedReader(path)) {
+            CSVReaderBuilder csvReaderBuilder=new CSVReaderBuilder(reader);
+            CSVReader csvReader = csvReaderBuilder.build();
+            String[] contact;
+            while ((contact = csvReader.readNext()) != null) {
+
+                System.out.print(contact[3] + " ");
+                System.out.print(contact[4] + " ");
+                System.out.print(contact[5] + " ");
+                System.out.print(contact[2] + " ");
+                System.out.print(contact[0] + " ");
+                System.out.print(contact[1] + " ");
+                System.out.print(contact[7] + " ");
+                System.out.print(contact[6] + " ");
+                System.out.println();
+            }
+        } catch (IOException | CsvValidationException e) {
             e.printStackTrace();
         }
     }

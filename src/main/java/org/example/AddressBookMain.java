@@ -1,5 +1,4 @@
 package org.example;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,8 @@ public class AddressBookMain {
     private static final int SORTED_CONTACT_LIST = 6;
     private static final int WRITE_IO_FILE = 7;
     private static final int READ_IO_FILE = 8;
+    private static final int WRITE_CSV_FILE = 9;
+    private static final int READ_CSV_FILE = 10;
     public static final int EXIT = 0;
 
     public static void main(String[] args) {
@@ -26,9 +27,19 @@ public class AddressBookMain {
             AddressBookOperations addressBookOperations = new AddressBookOperations();
             boolean loop = true;
             while (loop) {
-                System.out.println("Enter the choice:-\n1.Add a new Address Book\n2.Edit Address Book\n" +
-                        "3.Delete Address Book\n4.Print Address Books\n5.Search by city or state" +
-                        "\n6.Sort Contacts by First Name\n7.Write to IO file\n8.Read from IO file\n9.Write into CSV file\n0.To exit");
+                System.out.println("""
+                        Enter the choice:-
+                        1.Add a new Address Book
+                        2.Edit Address Book
+                        3.Delete Address Book
+                        4.Print Address Books
+                        5.Search by city or state
+                        6.Sort Contacts by First Name
+                        7.Write to IO file
+                        8.Read from IO file
+                        9.Write into CSV file
+                        10.Read CSV file
+                        0.To exit""");
                 int choice = sc.nextInt();
                 switch (choice) {
                     case ADD_ADDRESS_BOOK -> addressBookOperations.createAddressBooks(address_Dictionary);
@@ -64,11 +75,13 @@ public class AddressBookMain {
                     case SORTED_CONTACT_LIST ->addressBookOperations.sortContacts(addressBookOperations,address_Dictionary);
                     case WRITE_IO_FILE -> addressBookOperations.writeToFile(address_Dictionary,addressBookOperations);
                     case READ_IO_FILE -> addressBookOperations.readIOFile();
+                    case WRITE_CSV_FILE -> addressBookOperations.writeToCsvFileUSingObject(address_Dictionary);
+                    case READ_CSV_FILE -> addressBookOperations.readCsvFile();
                     case EXIT -> loop = false;
                     default -> throw new IllegalStateException("Unexpected value: " + choice);
                 }
             }
-        }catch (IOException exception){
+        }catch (Exception exception){
             System.out.println(exception.getMessage());
         }
     }

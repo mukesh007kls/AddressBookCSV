@@ -1,3 +1,2 @@
-akhila,k,143,mk,kothapet,hyd,ts,500003
-mukesh,mallikanti,95000,mallika,sarapka,hyderabad,telanagana,500001
-venkat,mallikanti,9700519297,mallikanti9,sarapka,kothagudem,telangana,507128
+mukesh,krishna,956,as,f,g,,2222
+mukesh,mallikanti,9505850673,mallikanti,sarapka,hyd,ts,5000172
