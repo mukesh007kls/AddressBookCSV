@@ -1,4 +1,6 @@
 package org.example;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +17,10 @@ public class AddressBookMain {
     private static final int READ_IO_FILE = 8;
     private static final int WRITE_CSV_FILE = 9;
     private static final int READ_CSV_FILE = 10;
+    private static final int WRITE_JSON_FILE = 11;
+    private static final int READ_JSON_FILE = 12;
     public static final int EXIT = 0;
+
 
     public static void main(String[] args) {
         try {
@@ -39,6 +44,8 @@ public class AddressBookMain {
                         8.Read from IO file
                         9.Write into CSV file
                         10.Read CSV file
+                        11.Write to json file
+                        12.Read from json file
                         0.To exit""");
                 int choice = sc.nextInt();
                 switch (choice) {
@@ -72,16 +79,19 @@ public class AddressBookMain {
                             }
                         }
                     }
-                    case SORTED_CONTACT_LIST ->addressBookOperations.sortContacts(addressBookOperations,address_Dictionary);
-                    case WRITE_IO_FILE -> addressBookOperations.writeToFile(address_Dictionary,addressBookOperations);
+                    case SORTED_CONTACT_LIST ->
+                            addressBookOperations.sortContacts(addressBookOperations, address_Dictionary);
+                    case WRITE_IO_FILE -> addressBookOperations.writeToFile(address_Dictionary);
                     case READ_IO_FILE -> addressBookOperations.readIOFile();
                     case WRITE_CSV_FILE -> addressBookOperations.writeToCsvFileUSingObject(address_Dictionary);
                     case READ_CSV_FILE -> addressBookOperations.readCsvFile();
+                    case WRITE_JSON_FILE -> addressBookOperations.writeToJson(address_Dictionary);
+                    case READ_JSON_FILE -> addressBookOperations.readFromJSONFile();
                     case EXIT -> loop = false;
                     default -> throw new IllegalStateException("Unexpected value: " + choice);
                 }
             }
-        }catch (Exception exception){
+        } catch (Exception exception) {
             System.out.println(exception.getMessage());
         }
     }

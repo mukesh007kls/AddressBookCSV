@@ -1,22 +1,24 @@
 package org.example;
 
+import com.google.gson.Gson;
 import com.opencsv.*;
-import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.CsvToBeanBuilder;
+
+
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvException;
+
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import com.opencsv.exceptions.CsvValidationException;
 import org.jetbrains.annotations.NotNull;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+
 import java.nio.file.Paths;
-import java.sql.SQLOutput;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -326,7 +328,7 @@ public class AddressBookOperations {
         }
     }
 
-    public void writeToFile(HashMap<String, AddressBookOperations> addressDictionary, AddressBookOperations addressBookOperations) throws IOException {
+    public void writeToFile(HashMap<String, AddressBookOperations> addressDictionary) throws IOException {
         String filePath = "src/main/resources/Contact.txt";
         StringBuilder stringBuilder = new StringBuilder();
         List<Address> contactList = addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).toList();
@@ -344,7 +346,7 @@ public class AddressBookOperations {
         }
     }
 
-    public void writeToFileUsingObject(HashMap<String, AddressBookOperations> addressDictionary, @NotNull AddressBookOperations addressBookOperations) throws IOException {
+    public void writeToFileUsingObject(HashMap<String, AddressBookOperations> addressDictionary) throws IOException {
         String filePath = "src/main/resources/Contact.txt";
         List<Address> contactList = addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).toList();
         Path path = Path.of(filePath);
@@ -361,11 +363,12 @@ public class AddressBookOperations {
             e.printStackTrace();
         }
     }
-    public void readCsvFile(){
+
+    public void readCsvFile() {
         String csvFilePath = "src/main/resources/Contact.csv";
-        Path path=Path.of(csvFilePath);
+        Path path = Path.of(csvFilePath);
         try (Reader reader = Files.newBufferedReader(path)) {
-            CSVReaderBuilder csvReaderBuilder=new CSVReaderBuilder(reader);
+            CSVReaderBuilder csvReaderBuilder = new CSVReaderBuilder(reader);
             CSVReader csvReader = csvReaderBuilder.build();
             String[] contact;
             while ((contact = csvReader.readNext()) != null) {
@@ -382,6 +385,36 @@ public class AddressBookOperations {
             }
         } catch (IOException | CsvValidationException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void writeToJson(@NotNull HashMap<String, AddressBookOperations> addressDictionary) throws IOException {
+        String jsonFilePath = "src/main/resources/Contact.json";
+        List<Address> contactList = addressDictionary.values().stream().flatMap(p -> p.addressList.stream()).toList();
+        Path path = Path.of(jsonFilePath);
+        Files.deleteIfExists(path);
+        Files.createFile(path);
+        try{
+            FileWriter writer = new FileWriter(path.toFile());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.writeValue(writer,contactList);
+
+        }catch (IOException exception){
+            throw new RuntimeException(exception);
+        }
+
+    }
+
+    public void readFromJSONFile() throws IOException {
+        String jsonFilePath = "src/main/resources/Contact.json";
+        Path filePath=Paths.get(jsonFilePath);
+        try(Reader reader=Files.newBufferedReader(filePath)) {
+
+            Gson gson=new Gson();
+            List<Address> contactList=Arrays.asList(gson.fromJson(reader,Address[].class));
+            contactList.forEach(System.out::println);
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
         }
     }
 }

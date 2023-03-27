@@ -1,2 +1,4 @@
-mukesh,krishna,956,as,f,g,,2222
-mukesh,mallikanti,9505850673,mallikanti,sarapka,hyd,ts,5000172
+akhila,k,45698143,koicherlaakhila1432,moosapet,hyderabad,ts,50003
+krishna,veni,8522057379,krishna435,spk,kothagudem,ts,507128
+mukesh,mallikanti,9505850673,mallikanti2000,sarapaka,kothagudem,ts,507128
+venkateswarlu,mallikanti,9700519297,mallikanti9,spk,kothagudem,ts,507128
